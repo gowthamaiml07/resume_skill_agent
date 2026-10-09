@@ -1,0 +1,35 @@
+# Python bytecode and cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Virtual Environments
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Environment Variables and Secrets (Crucial: never commit API keys!)
+.env
+.env.local
+*.secret
+*.key
+
+# Streamlit cache and local runtime files
+.streamlit/
+
+# Operating System files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Output files / scratch files
+scratch/
+temp/
+*.tmp
