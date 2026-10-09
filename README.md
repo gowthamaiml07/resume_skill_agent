@@ -1,158 +1,87 @@
-# 🎯 AI Resume Analyzer and Skill Development Agent
-
-An intelligent, ethical, and privacy-conscious web application that transforms standard PDF resumes into actionable career growth plans. Built using **Python**, **Streamlit**, **PyMuPDF**, and **LangChain** with **OpenAI structured outputs**.
-
----
-
-## 🌟 Key Features
-
-1. **📄 In-Memory PDF Parsing**: Extracts and validates clean digital text from uploaded PDF resumes using PyMuPDF (`fitz`) without saving files to disk.
-2. **🎯 Structured Competency Analysis**: Evaluates resume evidence against target job roles (e.g., *Python Developer*, *Data Analyst*, *Machine Learning Engineer*) and optional custom job descriptions.
-3. **🟢 Evidenced vs. Not-Evidenced Skills**: Clearly distinguishes between demonstrated skills and skills marked as *"Not evidenced in resume"* (avoiding unfounded assumptions that a candidate lacks a skill).
-4. **📊 Honest Skill-Overlap Metric**: Calculates a realistic skill overlap percentage, accompanied by a clear disclaimer that it is an educational alignment indicator, not a hiring decision.
-5. **🗺️ 4-Week Personalized Learning Roadmap**: Delivers a structured week-by-week curriculum with learning objectives, hands-on tasks, and recommended resources to bridge identified skill gaps.
-6. **🛠️ Portfolio Project Recommendations**: Suggests real-world, resume-worthy projects designed to build and prove un-evidenced competencies with concrete deliverables.
-7. **✍️ Non-Hallucinatory Resume Enhancements**: Suggests impactful phrasing, action verbs, and structure improvements without fabricating qualifications, degrees, or fake metrics.
-8. **💡 Tailored Interview Preparation**: Generates role-specific technical, behavioral, and architectural interview questions with answer guidelines.
-9. **📥 Markdown Export**: Allows users to download their complete customized analysis and roadmap as a clean `.md` document.
-
----
-
-## 📂 Project Structure
+## 📁 Project Structure
 
 ```text
 resume_skill_agent/
 │
-├── app.py                      # Main Streamlit Application with Navigation Router & State Manager
-├── agent.py                    # LangChain Agent, Pydantic schemas, and report generator
-├── resume_parser.py            # Memory-safe PDF extraction using PyMuPDF and validation
-├── test_suite.py               # Automated unit and integration test suite
-├── generate_sample_pdf.py      # Quick script to generate sample PDF resume
-├── sample_resume.pdf           # Sample candidate resume for instant offline testing
+├── app.py                      # Main Streamlit application
+├── agent.py                    # AI agent and resume analysis logic
+├── resume_parser.py            # Extracts text from uploaded PDF resumes
+├── config.py                   # Application and API configuration
 ├── requirements.txt            # Python dependencies
-├── .env.example                # Template for environment variables
-├── .gitignore                  # Git ignore rules for secrets and virtualenvs
-├── README.md                   # Complete documentation
+├── README.md                   # Project documentation
+├── .gitignore                  # Files excluded from Git
 │
-└── components/                 # Reusable UI & Page Modules (White & Emerald Design System)
-    ├── __init__.py
-    ├── theme.py                # Design tokens, Google Font Inter, custom CSS styling
-    ├── navigation.py           # Sidebar navigation, brand logo, active route highlighting
-    ├── header.py               # Uniform page headers, breadcrumbs, status indicators
-    ├── cards.py                # Metric cards, feature cards, empty states, badges, disclaimers
-    ├── views_home.py           # Home dashboard view (Hero, Feature cards, quick actions)
-    ├── views_analysis.py       # Resume Analysis page (Upload, Target role, Results, Download)
-    ├── views_skill_gap.py      # Skill Gap Analysis deep dive (Evidenced vs. Not Evidenced matrix)
-    ├── views_roadmap.py        # 4-Week Learning Roadmap (Timeline, weekly action plan, resources)
-    ├── views_projects.py       # Recommended Projects (Portfolio ideas, deliverables, impact)
-    ├── views_interview.py      # Interview Preparation (Categorized Q&A strategies)
-    └── views_settings.py       # Settings, About, Ethics, Privacy, System Info
+├── .streamlit/
+│   └── secrets.toml.example    # Example configuration for API secrets
+│
+├── components/
+│   ├── __init__.py             # Components package initialization
+│   ├── cards.py                # Reusable UI cards
+│   ├── header.py               # Page headers and shared UI elements
+│   ├── navigation.py           # Application navigation
+│   ├── theme.py                # UI theme and styling
+│   ├── views_home.py           # Home dashboard
+│   ├── views_analysis.py       # Resume analysis interface
+│   ├── views_skill_gap.py      # Skill gap analysis
+│   ├── views_roadmap.py        # Learning roadmap
+│   ├── views_projects.py       # Project recommendations
+│   ├── views_interview.py      # Interview preparation
+│   └── views_settings.py       # Settings and information page
+│
+├── generate_sample_pdf.py      # Generates a sample resume PDF
+├── sample_resume.pdf           # Sample resume for testing
+└── test_suite.py               # Application tests
 ```
 
-### Module Breakdown
+## 🛠️ Technologies Used
 
-| File / Directory | Purpose |
-| :--- | :--- |
-| [`app.py`](file:///c:/Users/AIML/Documents/resume_skill_agent/app.py) | Main application entry point with state management and dynamic multi-page routing. |
-| [`components/`](file:///c:/Users/AIML/Documents/resume_skill_agent/components) | White & Emerald UI library containing theme tokens, sidebar navigation, headers, cards, and page views. |
-| [`agent.py`](file:///c:/Users/AIML/Documents/resume_skill_agent/agent.py) | LangChain chain with structured Pydantic outputs, offline demo analyzer, and Markdown exporter. |
-| [`resume_parser.py`](file:///c:/Users/AIML/Documents/resume_skill_agent/resume_parser.py) | In-memory PyMuPDF text extractor, empty/scanned PDF validator, and metadata calculator. |
-| [`test_suite.py`](file:///c:/Users/AIML/Documents/resume_skill_agent/test_suite.py) | Automated test suite verifying PDF extraction, models, demo analyzer, and report generation. |
+* **Python** — Core programming language
+* **Streamlit** — Interactive web application interface
+* **LangChain** — LLM integration and AI workflows
+* **Groq API** — AI model access
+* **PyMuPDF** — PDF resume text extraction
+* **Pydantic** — Structured data validation, if used by the implementation
 
----
+## ✨ Main Features
 
-## 🛠️ Step-by-Step Windows Setup Guide
+* Resume PDF upload and text extraction
+* AI-powered resume analysis
+* Skill gap analysis for a target job role
+* Personalized learning roadmap
+* Recommended hands-on projects
+* Interview preparation
+* Reusable UI components and consistent styling
 
-Follow these exact steps in **Windows Command Prompt (`cmd.exe`)** or **PowerShell**:
+## 🔐 API Configuration
 
-### 1. Open Terminal and Navigate to Project Directory
+Configure your Groq API key locally using Streamlit secrets.
 
-```cmd
-cd c:\Users\AIML\Documents\resume_skill_agent
-```
+Create `.streamlit/secrets.toml` with:
 
-### 2. Create a Python Virtual Environment
-
-```cmd
-python -m venv venv
-```
-*(If `python` is not recognized, try `py -m venv venv`)*
-
-### 3. Activate the Virtual Environment
-
-- **In Windows Command Prompt (`cmd.exe`):**
-  ```cmd
-  venv\Scripts\activate
-  ```
-- **In PowerShell:**
-  ```powershell
-  .\venv\Scripts\Activate.ps1
-  ```
-  *(If you see an execution policy warning in PowerShell, run `Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned` first)*
-
-### 4. Upgrade pip and Install Dependencies
-
-```cmd
-python -m pip install --upgrade pip
-pip install -r requirements.txt
-```
-
-### 5. Configure Your API Key Automatically
-
-The application automatically loads your API keys according to the following priority:
-1. **Streamlit Secrets:** `.streamlit/secrets.toml`
-2. **Environment File:** `.env`
-
-#### Recommended Setup (Groq Cloud):
-1. Open `.streamlit/secrets.toml` (or create it by copying `.streamlit/secrets.toml.example`).
-2. Add your free Groq API key:
-   ```toml
-   GROQ_API_KEY = "gsk_your_actual_groq_api_key_here"
-   GROQ_MODEL = "llama-3.3-70b-versatile"
-   ```
-*(Get your free key at [console.groq.com/keys](https://console.groq.com/keys))*
-
-#### Optional Alternative (OpenAI):
 ```toml
-OPENAI_API_KEY = "sk-proj-..."
-OPENAI_MODEL = "gpt-4o-mini"
+GROQ_API_KEY = "your_groq_api_key_here"
 ```
 
-#### Offline / Demo Mode:
-If no API key is provided or you wish to test locally without credits, select **🧪 Offline / Demo Mode** to run the complete keyword matching engine offline.
+Keep the actual secrets file private and excluded from Git. Commit only `.streamlit/secrets.toml.example` with a placeholder value.
 
-### 6. Launch the Streamlit Application
+## 🚀 Run the Application
 
-```cmd
-py -m streamlit run app.py
+Install dependencies:
+
+```bash
+python -m pip install -r requirements.txt
 ```
-*(or `streamlit run app.py` if your virtual environment is active)*
 
-The application will open automatically in your default web browser at `http://localhost:8501`.
+Start the application:
 
----
+```bash
+streamlit run app.py
+```
 
-## 🧪 Manual Testing Checklist
+## 🧪 Run Tests
 
-| Step | Action | Expected Result |
-| :---: | :--- | :--- |
-| **1** | Start the app with `streamlit run app.py` | UI loads with clear title, sidebar settings, and upload form. |
-| **2** | Select **🧪 Offline / Demo Mode** or use an active API key | Enables testing immediately even if API quota is 0. |
-| **3** | Upload a text-based digital PDF resume | PyMuPDF extracts text, showing page count, word count, and text preview. |
-| **4** | Enter target role (e.g. "Machine Learning Engineer") | Role is populated and the **🚀 Run Skill Gap Analysis** button becomes active. |
-| **5** | Click **Run Skill Gap Analysis** | Generates executive metric cards and structured analysis tabs. |
-| **6** | Inspect **Skills Matrix** tab | Evidenced skills show green badges with resume context; un-evidenced skills show yellow badges with importance level. |
-| **7** | Inspect **4-Week Roadmap** & **Projects** tabs | Shows a step-by-step weekly plan and portfolio projects targeting un-evidenced skills. |
-| **8** | Inspect **Resume Polish** tab | Provides constructive bullet-point upgrades without fabricated numbers or fake credentials. |
-| **9** | Click **Download Full Report (.md)** in the Export tab | Generates and downloads a clean Markdown file (`Resume_Analysis_*.md`). |
+```bash
+python test_suite.py
+```
 
----
-
-## 🛡️ Privacy & Ethical AI Principles
-
-- **Zero Permanent Storage:** Resumes are processed purely in-memory (`BytesIO`) and discarded immediately.
-- **Strict Anti-Hallucination:** System prompts enforce that no qualifications, past titles, or achievements may be invented.
-- **Fair Labeling:** Skills absent from the resume are categorized as *"Not evidenced in resume"* rather than assuming candidate incapacity.
-- **Transparent Metrics:** Match score is explicitly framed as keyword and evidence overlap, not a hiring guarantee or ATS pass/fail verdict.
-#   r e s u m e _ s k i l l _ a g e n t  
- 
+Use the test command supported by your test suite; if it uses `pytest`, run `python -m pytest` instead.
