@@ -9,8 +9,10 @@ from __future__ import annotations
 
 import io
 import re
-from typing import BinaryIO, Dict, Union
-import fitz  # PyMuPDF
+try:
+    import pymupdf as fitz
+except ImportError:
+    import fitz  # Fallback for older environments
 
 
 class ResumeParsingError(Exception):

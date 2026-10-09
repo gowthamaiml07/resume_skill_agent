@@ -1,5 +1,20 @@
-# Python bytecode and cache
+# Secrets
+.env
+.env.local
+.streamlit/secrets.toml
+!.streamlit/secrets.toml.example
+*.secret
+*.key
+
+# Python environment and cache
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
 __pycache__/
+*.pyc
 *.py[cod]
 *$py.class
 *.so
@@ -7,29 +22,12 @@ __pycache__/
 .coverage
 htmlcov/
 
-# Virtual Environments
-venv/
-.venv/
-env/
-ENV/
-env.bak/
-venv.bak/
-
-# Environment Variables and Secrets (Crucial: never commit API keys!)
-.env
-.env.local
-*.secret
-*.key
-
-# Streamlit cache and local runtime files
-.streamlit/
-
 # Operating System files
 .DS_Store
 Thumbs.db
 desktop.ini
 
-# Output files / scratch files
+# Output / Scratch files
 scratch/
 temp/
 *.tmp

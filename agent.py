@@ -14,10 +14,20 @@ from pydantic import BaseModel, Field
 
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
-from dotenv import load_dotenv
+try:
+    from langchain_groq import ChatGroq
+except ImportError:
+    ChatGroq = None
 
-# Load environment variables if available
-load_dotenv()
+from config import (
+    get_groq_api_key,
+    get_groq_model,
+    get_openai_api_key,
+    get_openai_model,
+    DEFAULT_GROQ_MODEL,
+    SUPPORTED_GROQ_MODELS,
+    is_placeholder,
+)
 
 
 # ==============================================================================
@@ -230,40 +240,74 @@ Provide a comprehensive, structured evaluation following all schema requirements
 
 def get_llm(
     api_key: Optional[str] = None,
-    model_name: str = "gpt-4o-mini",
+    model_name: Optional[str] = None,
     temperature: float = 0.2,
     base_url: Optional[str] = None,
-) -> ChatOpenAI:
+    is_groq: bool = False,
+):
     """
-    Initializes a LangChain ChatOpenAI instance with safe API key and custom base_url handling.
+    Initializes a LangChain Chat Model (ChatGroq or ChatOpenAI) with automatic key loading and error checks.
 
     Args:
-        api_key: OpenAI / Provider API key.
-        model_name: Model identifier (e.g., 'gpt-4o-mini', 'llama-3.3-70b-versatile').
+        api_key: Optional explicitly provided API key. If not provided, automatically loads from config.
+        model_name: Optional model identifier.
         temperature: Sampling temperature (0.0 to 1.0, default 0.2).
-        base_url: Optional base URL for OpenAI-compatible providers (Groq, OpenRouter, DeepSeek, Ollama).
+        base_url: Optional base URL for OpenAI-compatible providers.
+        is_groq: If True or if key starts with 'gsk_', configures Groq.
 
     Returns:
-        Configured ChatOpenAI instance.
+        Configured ChatGroq or ChatOpenAI instance.
 
     Raises:
-        ValueError: If no valid API key is found when not using local endpoint.
+        ValueError: If no valid API key is found.
     """
-    resolved_key = api_key or os.getenv("OPENAI_API_KEY")
+    # Detect Groq usage from params or key prefix
+    is_groq_mode = is_groq or (base_url and "groq" in base_url.lower()) or (api_key and api_key.startswith("gsk_"))
+
+    if is_groq_mode:
+        resolved_key = api_key if (api_key and not is_placeholder(api_key)) else get_groq_api_key()
+        resolved_model = model_name or get_groq_model() or DEFAULT_GROQ_MODEL
+
+        if not resolved_key or is_placeholder(resolved_key):
+            raise ValueError(
+                "Groq API Key is missing or invalid. Please configure your key in "
+                "'.streamlit/secrets.toml' (GROQ_API_KEY = 'gsk_...') or set the "
+                "GROQ_API_KEY environment variable in '.env'."
+            )
+
+        # Use ChatGroq if available
+        if ChatGroq is not None:
+            return ChatGroq(
+                model_name=resolved_model,
+                groq_api_key=resolved_key.strip(),
+                temperature=temperature,
+            )
+        else:
+            # Fallback to OpenAI-compatible endpoint
+            return ChatOpenAI(
+                model=resolved_model,
+                api_key=resolved_key.strip(),
+                base_url="https://api.groq.com/openai/v1",
+                temperature=temperature,
+            )
+
+    # OpenAI / Default Provider
+    resolved_key = api_key if (api_key and not is_placeholder(api_key)) else get_openai_api_key()
+    resolved_model = model_name or get_openai_model()
     resolved_base_url = base_url or os.getenv("OPENAI_BASE_URL")
 
-    # If using local ollama without key, allow dummy key
+    # Local Ollama / Mock exception
     if resolved_base_url and "localhost" in resolved_base_url and not resolved_key:
         resolved_key = "ollama"
 
-    if not resolved_key or not resolved_key.strip():
+    if not resolved_key or is_placeholder(resolved_key):
         raise ValueError(
-            "API Key is missing. Please set the OPENAI_API_KEY environment variable "
-            "in your .env file or enter it in the application sidebar."
+            "API Key is missing. Please configure your key in '.streamlit/secrets.toml' "
+            "or set OPENAI_API_KEY / GROQ_API_KEY in '.env'."
         )
 
     kwargs = {
-        "model": model_name or "gpt-4o-mini",
+        "model": resolved_model,
         "temperature": temperature,
         "api_key": resolved_key.strip(),
     }
@@ -278,27 +322,29 @@ def analyze_resume(
     target_role: str,
     job_description: Optional[str] = None,
     api_key: Optional[str] = None,
-    model_name: str = "gpt-4o-mini",
+    model_name: Optional[str] = None,
     temperature: float = 0.2,
     base_url: Optional[str] = None,
+    is_groq: bool = False,
 ) -> ResumeAnalysisOutput:
     """
-    Executes the structured resume analysis using LangChain and ChatOpenAI.
+    Executes the structured resume analysis using LangChain (ChatGroq / ChatOpenAI).
 
     Args:
         resume_text: Extracted plain text from the candidate's PDF resume.
         target_role: Target career role (e.g. 'Python Developer', 'Data Analyst').
         job_description: Optional job description text for customized alignment.
-        api_key: OpenAI or compatible provider API key.
+        api_key: Provider API key.
         model_name: Name of the model to use.
         temperature: Temperature for response generation.
-        base_url: Optional custom base URL (e.g. Groq, OpenRouter).
+        base_url: Optional custom base URL.
+        is_groq: If True, uses Groq provider.
 
     Returns:
         ResumeAnalysisOutput instance containing structured analysis.
     """
     if not resume_text or not resume_text.strip():
-        raise ValueError("Resume text is empty. Please provide a valid resume.")
+        raise ValueError("Resume text is empty. Please upload a valid resume.")
 
     if not target_role or not target_role.strip():
         raise ValueError("Target job role is required.")
@@ -316,13 +362,14 @@ def analyze_resume(
         ("human", USER_PROMPT_TEMPLATE),
     ])
 
-    # Candidate models to try in case of 404 / unavailable model
-    candidate_models = [model_name]
-    if base_url and "groq" in base_url.lower():
-        fallback_groq_models = ["llama-3.1-8b-instant", "llama3-70b-8192", "mixtral-8x7b-32768", "llama-3.3-70b-versatile"]
-        for fm in fallback_groq_models:
-            if fm not in candidate_models:
-                candidate_models.append(fm)
+    is_groq_exec = is_groq or (base_url and "groq" in base_url.lower()) or (api_key and api_key.startswith("gsk_"))
+    primary_model = model_name or (get_groq_model() if is_groq_exec else get_openai_model())
+
+    candidate_models = [primary_model]
+    if is_groq_exec:
+        for fallback_m in SUPPORTED_GROQ_MODELS:
+            if fallback_m not in candidate_models:
+                candidate_models.append(fallback_m)
 
     last_err = None
     result = None
@@ -334,6 +381,7 @@ def analyze_resume(
                 model_name=candidate_model,
                 temperature=temperature,
                 base_url=base_url,
+                is_groq=is_groq_exec,
             )
             # Try tool-calling structured output, then json_mode fallback
             try:
@@ -357,10 +405,19 @@ def analyze_resume(
                 break
         except Exception as e:
             last_err = e
-            # If error is 404 or model not found, loop to next candidate
             err_msg = str(e).lower()
-            if "404" in err_msg or "model_not_found" in err_msg or "does not exist" in err_msg:
+            # If 404/model not found on Groq, try next candidate model
+            if ("404" in err_msg or "model_not_found" in err_msg or "does not exist" in err_msg) and len(candidate_models) > 1:
                 continue
+            elif "401" in err_msg or "invalid api key" in err_msg or "authentication" in err_msg:
+                raise ValueError(
+                    "Authentication Error: Invalid API Key. Please verify your key at "
+                    "https://console.groq.com/keys and update '.streamlit/secrets.toml' or '.env'."
+                ) from e
+            elif "429" in err_msg or "rate limit" in err_msg:
+                raise ValueError(
+                    "Rate Limit Exceeded: Groq API request quota reached. Please wait a moment before trying again."
+                ) from e
             else:
                 raise e
 
@@ -371,10 +428,6 @@ def analyze_resume(
 
     # Post-validation safety check on percentages
     if result.total_target_role_skills_count > 0 and result.evidenced_skills_count >= 0:
-        calculated_pct = round(
-            (result.evidenced_skills_count / result.total_target_role_skills_count) * 100, 1
-        )
-        # Harmonize percentage within bounds
         result.skill_match_percentage = min(max(result.skill_match_percentage, 0.0), 100.0)
 
     return result
